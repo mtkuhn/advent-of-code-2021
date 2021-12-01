@@ -1,4 +1,4 @@
-#Day 1: Sonar Sweep
+# Day 1: Sonar Sweep
 The elves lost Santa's keys to the depths, and we need to use a submarine to find and retrieve them.
 
 ## Part 1
