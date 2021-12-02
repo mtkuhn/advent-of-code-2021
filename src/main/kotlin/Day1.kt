@@ -7,7 +7,7 @@ fun main() {
     part2("src/main/resources/day1.csv")
 }
 
-fun part1(inputFile: String) {
+private fun part1(inputFile: String) {
     File(inputFile).readLines().asSequence()
         .map { it.toInt() }
         .zipWithNext { a, b -> b - a }
@@ -15,7 +15,7 @@ fun part1(inputFile: String) {
         .apply { println(this) }
 }
 
-fun part2(inputFile: String) {
+private fun part2(inputFile: String) {
     File(inputFile).readLines().asSequence()
         .map { it.toInt() }
         .windowed(3)
