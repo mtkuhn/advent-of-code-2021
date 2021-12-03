@@ -1,4 +1,7 @@
 # Day 3: Binary Diagnostic
+
+[[source]](../src/main/kotlin/Day3.kt)
+
 We need to check the sub's diagnostics from a binary readout.
 
 # Part 1

@@ -1,4 +1,7 @@
 # Day 1: Sonar Sweep
+
+[[source]](../src/main/kotlin/Day1.kt)
+
 The elves lost Santa's keys to the depths, and we need to use a submarine to find and retrieve them.
 
 ## Part 1

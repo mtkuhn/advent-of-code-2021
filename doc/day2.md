@@ -1,4 +1,7 @@
-# Day 2
+# Day 2: Dive!
+
+[[source]](../src/main/kotlin/Day2.kt)
+
 Our sub can take commands!
 
 # Part 1
