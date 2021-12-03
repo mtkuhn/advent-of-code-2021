@@ -7,22 +7,19 @@ fun main() {
     part2("src/main/resources/day3.txt")
 }
 
-private fun String.binaryStringToInt(): Int = this.map { char -> char.digitToInt() }.binaryArrayToInt()
-private fun List<Int>.binaryArrayToInt(): Int = reduce { acc, n -> (acc*2)+n }
-
 //part 1
 
 private fun part1(inputFile: String) {
     val lines = File(inputFile).readLines()
     val lineCount = lines.size
-    val mostCommonDigits =
-        lines.map { line -> line.toCharArray().map { char -> char.digitToInt() }.toMutableList() } //convert to a list of ints
+    val mostCommonDigits = lines.map { line -> line.toCharArray().map { char -> char.digitToInt() }.toMutableList() } //convert to a list of ints
         .reduce { acc, intArray -> //sum up the ints per position
             acc.onEachIndexed { i, _ -> acc[i] += intArray[i] }
         }
         .map { sums -> if(sums >= lineCount/2.0) 1 else 0 } //determine the most common by comparing the sum to total number of lines
-    val gammaRate = mostCommonDigits.binaryArrayToInt()
-    val epsilonRate = mostCommonDigits.map { if(it == 0) 1 else 0 }.binaryArrayToInt()
+        .joinToString("")
+    val gammaRate = mostCommonDigits.toInt(2) //binaryArrayToInt()
+    val epsilonRate = mostCommonDigits.map { if(it == '0') '1' else '0' }.joinToString("").toInt(2) //binaryArrayToInt()
     println(gammaRate*epsilonRate)
 }
 
@@ -45,7 +42,7 @@ private fun List<String>.findRating(useMostCommon: Boolean): String =
 
 private fun part2(inputFile: String) {
     val lines = File(inputFile).readLines()
-    val oxygenGeneratorRating = lines.findRating(true).binaryStringToInt()
-    val co2scrubberRating = lines.findRating(false).binaryStringToInt()
+    val oxygenGeneratorRating = lines.findRating(true).toInt(2)
+    val co2scrubberRating = lines.findRating(false).toInt(2)
     println(oxygenGeneratorRating*co2scrubberRating)
 }

@@ -16,27 +16,21 @@ My solution this time is a little messy. First I get the list of lines and a cou
     val lines = File(inputFile).readLines()
     val lineCount = lines.size
 ```
-I'm also going to need some utility functions for conversions:
-```
-private fun String.binaryStringToInt(): Int = this.map { char -> char.digitToInt() }.binaryArrayToInt()
-private fun List<Int>.binaryArrayToInt(): Int = reduce { acc, n -> (acc*2)+n }
-```
 Next I find the most common digits in each position, first by converting each line to a list of ints (which will all be 1 or 0),
 then by doing a reduction in which each iteration works to sum up values per each position. You can think of this as a summation across vectors.
 Finally, we can compare each sum to the number of lines. If it's over half then we know 1 is most common.
 ```
-    val mostCommonDigits = 
-        lines.map { line -> line.toCharArray().map { char -> char.digitToInt() }.toMutableList() }
-        .reduce { acc, intArray ->
+    val mostCommonDigits = lines.map { line -> line.toCharArray().map { char -> char.digitToInt() }.toMutableList() } //convert to a list of ints
+        .reduce { acc, intArray -> //sum up the ints per position
             acc.onEachIndexed { i, _ -> acc[i] += intArray[i] }
         }
-        .map { sums -> if(sums >= lineCount/2.0) 1 else 0 }
-}
+        .map { sums -> if(sums >= lineCount/2.0) 1 else 0 } //determine the most common by comparing the sum to total number of lines
+        .joinToString("")
 ```
 Then all that's left is to do the product and print.
 ```
-    val gammaRate = mostCommonDigits.binaryArrayToInt()
-    val epsilonRate = mostCommonDigits.map { if(it == 0) 1 else 0 }.binaryArrayToInt()
+    val gammaRate = mostCommonDigits.toInt(2) //binaryArrayToInt()
+    val epsilonRate = mostCommonDigits.map { if(it == '0') '1' else '0' }.joinToString("").toInt(2) //binaryArrayToInt()
     println(gammaRate*epsilonRate)
 ```
 
@@ -81,8 +75,8 @@ Finally, we bring it all together. One value for most common, and one for least,
 ```
 private fun part2(inputFile: String) {
     val lines = File(inputFile).readLines()
-    val oxygenGeneratorRating = lines.findRating(true).binaryStringToInt()
-    val co2scrubberRating = lines.findRating(false).binaryStringToInt()
+    val oxygenGeneratorRating = lines.findRating(true).toInt(2)
+    val co2scrubberRating = lines.findRating(false).toInt(2)
     println(oxygenGeneratorRating*co2scrubberRating)
 }
 ```
