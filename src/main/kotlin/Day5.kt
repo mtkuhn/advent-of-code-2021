@@ -10,14 +10,14 @@ fun main() {
 typealias Point = Pair<Int, Int>
 typealias Line = Pair<Point, Point>
 
-fun Int.progressionBetween(i: Int): IntProgression =
+fun Int.progressionTo(i: Int): IntProgression =
     if(this > i) { i..this }
     else { i downTo this }
 
 fun Line.isHorizontal() = this.first.first == this.second.first
 fun Line.isVertical() = this.first.second == this.second.second
-fun Line.getHorizontalPoints() = (this.first.second.progressionBetween(this.second.second)).map { y -> this.first.first to y }
-fun Line.getVerticalPoints() = (this.first.first.progressionBetween(this.second.first)).map { x -> x to this.first.second }
+fun Line.getHorizontalPoints() = (this.first.second.progressionTo(this.second.second)).map { y -> this.first.first to y }
+fun Line.getVerticalPoints() = (this.first.first.progressionTo(this.second.first)).map { x -> x to this.first.second }
 fun Line.get45DegreePoints() = getVerticalPoints().map { it.first }.zip(getHorizontalPoints().map { it.second })
 
 fun Line.getAllPoints(allow45degree: Boolean): List<Point> =

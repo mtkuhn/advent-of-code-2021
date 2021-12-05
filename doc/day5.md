@@ -30,13 +30,13 @@ map over the range of changing values for one half of our pair, while the other 
 ```kotlin
 fun Line.isHorizontal() = this.first.first == this.second.first
 fun Line.isVertical() = this.first.second == this.second.second
-fun Line.getHorizontalPoints() = (this.first.second.progressionBetween(this.second.second)).map { y -> this.first.first to y }
-fun Line.getVerticalPoints() = (this.first.first.progressionBetween(this.second.first)).map { x -> x to this.first.second }
+fun Line.getHorizontalPoints() = (this.first.second.progressionTo(this.second.second)).map { y -> this.first.first to y }
+fun Line.getVerticalPoints() = (this.first.first.progressionTo(this.second.first)).map { x -> x to this.first.second }
 ```
-Those that know Kotlin might be wondering what `progressionBetween()` is. Frustratingly, Kotlin only honors ranges/progressions
+Those that know Kotlin might be wondering what `progressionTo()` is. Frustratingly, Kotlin only honors ranges/progressions
 that are defined in the correct order, so I made this convenience method to sort it out.
 ```kotlin
-fun Int.progressionBetween(i: Int): IntProgression =
+fun Int.progressionTo(i: Int): IntProgression =
     if(this > i) { i..this }
     else { i downTo this }
 ```
