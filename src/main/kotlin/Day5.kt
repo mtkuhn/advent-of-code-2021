@@ -10,17 +10,17 @@ fun main() {
 typealias Point = Pair<Int, Int>
 typealias Line = Pair<Point, Point>
 
-fun Int.rangeBetween(i: Int): IntProgression =
+fun Int.progressionBetween(i: Int): IntProgression =
     if(this > i) { i..this }
     else { i downTo this }
 
 fun Line.isHorizontal() = this.first.first == this.second.first
 fun Line.isVertical() = this.first.second == this.second.second
-fun Line.getHorizontalPoints() = (this.first.second.rangeBetween(this.second.second)).map { y -> this.first.first to y }
-fun Line.getVerticalPoints() = (this.first.first.rangeBetween(this.second.first)).map { x -> x to this.first.second }
+fun Line.getHorizontalPoints() = (this.first.second.progressionBetween(this.second.second)).map { y -> this.first.first to y }
+fun Line.getVerticalPoints() = (this.first.first.progressionBetween(this.second.first)).map { x -> x to this.first.second }
 fun Line.get45DegreePoints() = getVerticalPoints().map { it.first }.zip(getHorizontalPoints().map { it.second })
 
-fun Line.getAllCoveredPoints(allow45degree: Boolean): List<Point> =
+fun Line.getAllPoints(allow45degree: Boolean): List<Point> =
     when {
         this.isHorizontal() -> getHorizontalPoints()
         this.isVertical() -> getVerticalPoints()
@@ -33,7 +33,7 @@ private fun part1(inputFile: String) {
     File(inputFile).readLines().asSequence()
         .mapNotNull { input -> lineRegex.find(input)?.destructured?.toList() }
         .map { list -> (list[0].toInt() to list[1].toInt()) to (list[2].toInt() to list[3].toInt()) }
-        .map { line -> line.getAllCoveredPoints(false) }
+        .map { line -> line.getAllPoints(false) }
         .flatten()
         .groupBy { it }
         .filter { it.value.size > 1 }
@@ -46,7 +46,7 @@ private fun part2(inputFile: String) {
     File(inputFile).readLines().asSequence()
         .mapNotNull { input -> lineRegex.find(input)?.destructured?.toList() }
         .map { list -> (list[0].toInt() to list[1].toInt()) to (list[2].toInt() to list[3].toInt()) }
-        .map { line -> line.getAllCoveredPoints(true) }
+        .map { line -> line.getAllPoints(true) }
         .flatten()
         .groupBy { it }
         .filter { it.value.size > 1 }
