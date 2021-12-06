@@ -40,10 +40,9 @@ I'm working with multiple scopes of `this` above. The function `calculateFishAft
 but the `apply` function as it own `this` as well. The most recent scope is used, but I can look back at the higher-level
 by calling `this@calculateFishAfterOneDay`.
 
-Now we want to iterate over a number of days. I use a fold to do this.
+Now we want to iterate over a number of days. So we create a sequence from which we can take any numbers of days.
 ```kotlin
-fun Map<Int, Long>.calculateFishAfterDays(days: Int): Map<Int, Long> =
-    (0 until days).fold(this) { acc, _ -> acc.calculateFishAfterOneDay() }
+fun Map<Int, Long>.getFishDaySequence() = generateSequence(this.calculateFishAfterOneDay()) { it.calculateFishAfterOneDay() }
 ```
 
 Finally we pull it all together.
@@ -56,7 +55,7 @@ private fun calcFishFromFileForDays(inputFile: String, days: Int) {
         .flatten()
         .groupBy { it }
         .mapValues { it.value.size.toLong() }
-        .calculateFishAfterDays(days)
+        .getFishDaySequence().take(days).last()
         .apply { println(this.values.sum()) }
 }
 ```

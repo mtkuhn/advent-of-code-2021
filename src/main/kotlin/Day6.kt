@@ -16,8 +16,7 @@ fun Map<Int, Long>.calculateFishAfterOneDay(): Map<Int, Long> =
             this[8] = (this[8]?:0)+(this@calculateFishAfterOneDay[0]?:0) //add original-day0 to day8
         }
 
-fun Map<Int, Long>.calculateFishAfterDays(days: Int): Map<Int, Long> =
-    (0 until days).fold(this) { acc, _ -> acc.calculateFishAfterOneDay() }
+fun Map<Int, Long>.getFishDaySequence() = generateSequence(this.calculateFishAfterOneDay()) { it.calculateFishAfterOneDay() }
 
 private fun calcFishFromFileForDays(inputFile: String, days: Int) {
     File(inputFile).readLines()
@@ -25,6 +24,6 @@ private fun calcFishFromFileForDays(inputFile: String, days: Int) {
         .flatten()
         .groupBy { it }
         .mapValues { it.value.size.toLong() }
-        .calculateFishAfterDays(days)
+        .getFishDaySequence().take(days).last()
         .apply { println(this.values.sum()) }
 }
