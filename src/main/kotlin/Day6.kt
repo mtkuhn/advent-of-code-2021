@@ -11,10 +11,8 @@ fun Map<Int, Long>.calculateFishAfterOneDay(): Map<Int, Long> =
     this.mapKeys { it.key-1 }//shift all keys back by one
         .toMutableMap()
         .apply {
-            this.keys.filter { it < 0 }.forEach { key -> //merge negative keys into their mod7 equivalent
-                this[key.mod(7)] = (this[key]?:0)+(this[key.mod(7)]?:0)
-                this.remove(key)
-            }
+            this[6] = (this[6]?:0)+(this[-1]?:0) //add -1 and 6 (same modular value)
+            this[-1] = 0 //clear -1
             this[8] = (this[8]?:0)+(this@calculateFishAfterOneDay[0]?:0) //add original-day0 to day8
         }
 

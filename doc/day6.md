@@ -31,16 +31,12 @@ fun Map<Int, Long>.calculateFishAfterOneDay(): Map<Int, Long> =
     this.mapKeys { it.key-1 }//shift all keys back by one
         .toMutableMap()
         .apply {
-            this.keys.filter { it < 0 }.forEach { key -> //merge negative keys into their mod7 equivalent
-                this[key.mod(7)] = (this[key]?:0)+(this[key.mod(7)]?:0)
-                this.remove(key)
-            }
+            this[6] = (this[6]?:0)+(this[-1]?:0) //add -1 and 6 (same modular value)
+            this[-1] = 0 //clear -1
             this[8] = (this[8]?:0)+(this@calculateFishAfterOneDay[0]?:0) //add original-day0 to day8
         }
 ```
-Two things to note above:
-- `%7` seems to produce negative results, so I had to switch to the `.mod(7)` function.
-- I'm working with multiple scopes of `this`. The function `calculateFishAfterOneDay()` references the original `Map<Int, Long>` it was called on, 
+I'm working with multiple scopes of `this` above. The function `calculateFishAfterOneDay()` references the original `Map<Int, Long>` it was called on, 
 but the `apply` function as it own `this` as well. The most recent scope is used, but I can look back at the higher-level
 by calling `this@calculateFishAfterOneDay`.
 
