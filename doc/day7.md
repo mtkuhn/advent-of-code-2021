@@ -32,11 +32,11 @@ private fun solve(inputFile: String, fuelCalc: Int.(Int)->Int) {
         .map { it.toInt() }
         .let { crabs ->
             getBoundsOnNumbers(crabs).map { h ->
-                h to crabs.sumOf { c -> c.fuelCalc(h) }
+                crabs.sumOf { c -> c.fuelCalc(h) }
             }
         }
-        .minByOrNull { it.second }
-        .apply { println(this?.second) }
+        .minByOrNull { it }
+        .apply { println(this) }
 }
 ```
 I'm reading in the fuel calculation as a higher-order function. In this case it's the distanceTo() method we established.
