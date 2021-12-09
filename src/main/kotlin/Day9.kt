@@ -44,8 +44,8 @@ private fun part1(inputFile: String) {
 private fun Elevation.extendAsBasin(map: HeightMap): Set<Elevation> =
         this.getAdjacent(map)
             .filter { it.height != 9 && it.height > this.height }
-            .flatMap { it.extendAsBasin(map) + it + this }
-            .toSet()
+            .flatMap { it.extendAsBasin(map) }
+            .toSet() + setOf(this)
 
 private fun part2(inputFile: String) {
     File(inputFile).readLines()

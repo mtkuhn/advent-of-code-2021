@@ -74,10 +74,10 @@ I start by creating a method to determine our basin. We start with a low point, 
 locate any adjacent elevation that is less than 9 but greater than the currently checked elevation.
 ```kotlin
 private fun Elevation.extendAsBasin(map: HeightMap): Set<Elevation> =
-        this.getAdjacent(map)
-            .filter { it.height != 9 && it.height > this.height }
-            .flatMap { it.extendAsBasin(map) + it + this }
-            .toSet()
+    this.getAdjacent(map)
+        .filter { it.height != 9 && it.height > this.height }
+        .flatMap { it.extendAsBasin(map) }
+        .toSet() + setOf(this)
 ```
 Then the answer is simple:
 ```kotlin
