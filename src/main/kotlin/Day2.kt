@@ -8,6 +8,8 @@ fun main() {
     part2("src/main/resources/day2.txt")
 }
 
+operator fun Pair<Int, Int>.plus(pos: Pair<Int, Int>) = first+pos.first to second+pos.second
+
 private fun part1(inputFile: String) {
     File(inputFile).readLines().asSequence()
         .map { line -> line.split(' ') }
