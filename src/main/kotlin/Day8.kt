@@ -29,60 +29,42 @@ private fun part1(inputFile: String) {
 
 //part 2
 
-class SegmentUtil {
-    companion object {
-        val ZERO: Set<Char> = "abcefg".toSet()
-        val ONE: Set<Char> = "cf".toSet()
-        val TWO: Set<Char> = "acdeg".toSet()
-        val THREE: Set<Char> = "acdfg".toSet()
-        val FOUR: Set<Char> = "bcdf".toSet()
-        val FIVE: Set<Char> = "abdfg".toSet()
-        val SIX: Set<Char> = "abdefg".toSet()
-        val SEVEN: Set<Char> = "acf".toSet()
-        val EIGHT: Set<Char> = "abcdefg".toSet()
-        val NINE: Set<Char> = "abcdfg".toSet()
-        private val ALL_NUMBERS: List<Set<Char>> =
-            listOf(ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE)
-
-        fun allNumbersMappedBy(mapping: Map<Char, Char>): List<Set<Char>> =
-            ALL_NUMBERS.map { number ->
-                number.map { mapping[it]!! }.toSet()
-            }
-    }
+enum class SegmentDisplay(val pattern: Set<Char>, val char: Char) {
+    ZERO("abcefg".toSet(), '0'),
+    ONE("cf".toSet(), '1'),
+    TWO("acdeg".toSet(), '2'),
+    THREE("acdfg".toSet(), '3'),
+    FOUR("bcdf".toSet(), '4'),
+    FIVE("abdfg".toSet(), '5'),
+    SIX("abdefg".toSet(), '6'),
+    SEVEN("acf".toSet(), '7'),
+    EIGHT("abcdefg".toSet(), '8'),
+    NINE("abcdfg".toSet(), '9')
 }
+
+fun displaysToRemappedPattern(mapping: Map<Char, Char>): Map<SegmentDisplay, Set<Char>> =
+    SegmentDisplay.values().associateWith { display ->
+        display.pattern.map { mapping[it]!! }.toSet()
+    }
 
 private fun Set<Char>.getCompatibleSegmentsOrNull(): Set<Char>? =
     when(this.size) {
-        2 -> SegmentUtil.ONE
-        3 -> SegmentUtil.SEVEN
-        4 -> SegmentUtil.FOUR
+        2 -> SegmentDisplay.ONE.pattern
+        3 -> SegmentDisplay.SEVEN.pattern
+        4 -> SegmentDisplay.FOUR.pattern
         else -> null
     }
 
-private fun Set<Char>.transformByMap(mapping: Map<Char, Char>): Set<Char> =
-    this.map { mapping[it]!! }.toSet()
-
 private fun Set<Char>.toMappedDisplayChar(mapping: Map<Char, Char>): Char =
-    when(this) {
-        SegmentUtil.ZERO.transformByMap(mapping) -> '0'
-        SegmentUtil.ONE.transformByMap(mapping) -> '1'
-        SegmentUtil.TWO.transformByMap(mapping) -> '2'
-        SegmentUtil.THREE.transformByMap(mapping) -> '3'
-        SegmentUtil.FOUR.transformByMap(mapping) -> '4'
-        SegmentUtil.FIVE.transformByMap(mapping) -> '5'
-        SegmentUtil.SIX.transformByMap(mapping) -> '6'
-        SegmentUtil.SEVEN.transformByMap(mapping) -> '7'
-        SegmentUtil.EIGHT.transformByMap(mapping) -> '8'
-        SegmentUtil.NINE.transformByMap(mapping) -> '9'
-        else -> error("Invalid segment display: $this")
-    }
+    displaysToRemappedPattern(mapping).entries.first { it.value == this }.key.char
+
 
 private fun generatePossibilitiesMap(wires: List<Set<Char>>): Map<Char, Set<Char>> {
     //note: the key is the 'standard' char for display, the value is possible mappings
     //to start, anything is possible for all mappings
-    val possibleMappings = SegmentUtil.EIGHT.associateWith { SegmentUtil.EIGHT }.toMutableMap()
+    val possibleMappings = SegmentDisplay.EIGHT.pattern.associateWith { SegmentDisplay.EIGHT.pattern }.toMutableMap()
 
-    //find possible values for each given input wire, reduce global possibilities by those groupings
+    //find possible values for each given input wire, reduce possible mappings by those groupings
     wires.sortedBy { it.size }
         .forEach { wire ->
             val pos = wire.getCompatibleSegmentsOrNull()
@@ -94,46 +76,44 @@ private fun generatePossibilitiesMap(wires: List<Set<Char>>): Map<Char, Set<Char
     return possibleMappings
 }
 
+private fun Map<Char, Char>.extendMappingsToNextElement(possibilities: Map<Char, Set<Char>>): List<Map<Char, Char>> =
+    if(this.size <= SegmentDisplay.EIGHT.pattern.indices.last) {
+        SegmentDisplay.EIGHT.pattern.elementAt(this.size).let { charToMap ->
+            possibilities[charToMap]!!
+                .filter { posChar -> !this.values.contains(posChar) }
+                .map { posChar -> this + mapOf(charToMap to posChar) }
+                .map { it.extendMappingsToNextElement(possibilities) }
+                .flatten()
+        }
+    }
+    else { listOf(this) }
+
 private fun Map<Char, Set<Char>>.generatePossibleMappings(): List<Map<Char, Char>> =
-    this['a']!!.map { a ->
-        this['b']!!.filter { it != a }.map { b ->
-            this['c']!!.filter { !listOf(a, b).contains(it) }.map { c ->
-                this['d']!!.filter { !listOf(a, b, c).contains(it) }.map { d ->
-                    this['e']!!.filter { !listOf(a, b, c ,d).contains(it) }.map { e ->
-                        this['f']!!.filter { !listOf(a, b, c, d, e).contains(it) }.map { f ->
-                            this['g']!!.filter { !listOf(a, b, c, d, e, f).contains(it) }.map { g ->
-                                mapOf('a' to a, 'b' to b, 'c' to c, 'd' to d, 'e' to e, 'f' to f, 'g' to g)
-                            }
-                        }.flatten()
-                    }.flatten()
-                }.flatten()
-            }.flatten()
-        }.flatten()
-    }.flatten()
+    emptyMap<Char, Char>().extendMappingsToNextElement(this)
 
 private fun Set<Char>.isValidForNumbers(numbers: List<Set<Char>>) =
     numbers.any { number -> this == number }
 
-private fun String.calcOutputValue(): Long {
-    val input = this.split(" | ")[0].split(" ").map { it.toSet() }
-    val output = this.split(" | ")[1].split(" ").map { it.toSet() }
-    val wires = input + output
+private fun String.calcOutputValueForLine(): Long {
+    val inputDisplays = this.split(" | ")[0].split(" ").map { it.toSet() }
+    val outputDisplays = this.split(" | ")[1].split(" ").map { it.toSet() }
+    val allDisplays = inputDisplays + outputDisplays
 
-    val mapping = generatePossibilitiesMap(wires)
+    val mapping = generatePossibilitiesMap(allDisplays)
         .generatePossibleMappings()
-        .map { SegmentUtil.allNumbersMappedBy(it) to it }
-        .first { mappedNumbers ->
-            wires.all { wire -> wire.isValidForNumbers(mappedNumbers.first) }
+        .map { displaysToRemappedPattern(it) to it }
+        .first { displayMapToMapping ->
+            allDisplays.all { display -> display.isValidForNumbers(displayMapToMapping.first.values.toList()) }
         }.second
 
-    return output.map { set -> set.toMappedDisplayChar(mapping) }
+    return outputDisplays.map { set -> set.toMappedDisplayChar(mapping) }
         .joinToString("")
         .toLong()
 }
 
 private fun part2(inputFile: String) {
     File(inputFile).readLines().asSequence()
-        .map { it.calcOutputValue() }
+        .map { it.calcOutputValueForLine() }
         .sum()
         .apply { println(this) }
 }
