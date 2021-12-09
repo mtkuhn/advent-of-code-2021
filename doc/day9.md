@@ -1,5 +1,7 @@
 # Day 9: Smoke Basin
 
+[[source]](../src/main/kotlin/Day9.kt)
+
 Smoke settles in low points within our height map of the floor. We can avoid trouble by avoiding those points.
 
 ## Part 1
