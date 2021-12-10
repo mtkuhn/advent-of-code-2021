@@ -89,8 +89,8 @@ fun Char.getAutoCompletePoints(): Int =
     }
 ```
 
-For the meat of part 2, we can use our `ChunkStack` to simply pop the compliment of everything it holds when we reach the end of
-and incomplete lines.
+For the meat of part 2, we can use our `ChunkStack` to simply pop the compliment of everything it holds when we reach 
+the end of incomplete lines.
 ```kotlin
 //in the ChunkStack class
 fun popCompliments(): List<Char> =
