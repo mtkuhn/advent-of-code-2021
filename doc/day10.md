@@ -21,32 +21,26 @@ at the top of the stack, then we report the corrupted `Char`.
 data class ChunkStack(val openers: MutableList<Char> = mutableListOf()) {
 
     companion object {
-        val chunkEndPairs = setOf('[' to ']', '(' to ')', '{' to '}', '<' to '>')
+        val endPairs = mapOf('[' to ']', '(' to ')', '{' to '}', '<' to '>')
     }
 
-    fun pushOrReturnInvalidChar(c: Char): Char? {
-        if(c in chunkEndPairs.map { it.first }) {
-            openers += c
-        } else {
-            val expectedPairing = chunkEndPairs.first { it.first == openers.last() }
-            if(c == expectedPairing.second) {
-                openers.removeLast()
-            } else {
-                return c
-            }
+    private fun Char.isOpener(): Boolean = this in endPairs.map { it.key }
+    private fun Char.isCloserForTopOfStack(): Boolean = this == endPairs[openers.first()]
+
+    fun pushOrReturnInvalidChar(c: Char): Char? =
+        when {
+            c.isOpener() -> apply { openers.add(0, c) }.let { null }
+            c.isCloserForTopOfStack() -> apply { openers.removeFirst() }.let { null }
+            else -> c
         }
-        return null
-    }
 
 }
 ```
 
 Using this, we can write a quick function to find the first corruption per line.
 ```kotlin
-fun String.getFirstCorruptChar(): Char? {
-    val chunkStack = ChunkStack()
-    return this.firstOrNull { chunkStack.pushOrReturnInvalidChar(it) != null }
-}
+fun String.getFirstCorruptChar(): Char? =
+    ChunkStack().let { cs -> this.firstOrNull { c -> cs.pushOrReturnInvalidChar(c) != null } }
 ```
 
 And we also need to handle the scoring of `Char`:
@@ -93,15 +87,11 @@ For the meat of part 2, we can use our `ChunkStack` to simply pop the compliment
 the end of incomplete lines.
 ```kotlin
 //in the ChunkStack class
-fun popCompliments(): List<Char> =
-    openers.map { c -> chunkEndPairs.first { it.first == c }.second }.reversed()
+fun popCompliments(): List<Char> = openers.mapNotNull { c -> endPairs[c] }
 ```
 ```kotlin
-fun String.getMissingClosers(): List<Char> {
-    val chunkStack = ChunkStack()
-    this.forEach { chunkStack.pushOrReturnInvalidChar(it) }
-    return chunkStack.popCompliments()
-}
+fun String.getMissingClosers(): List<Char> =
+    ChunkStack().apply { this@getMissingClosers.forEach { this.pushOrReturnInvalidChar(it) } }.popCompliments()
 ```
 
 Finally, we bring it together:

@@ -10,32 +10,25 @@ fun main() {
 data class ChunkStack(val openers: MutableList<Char> = mutableListOf()) {
 
     companion object {
-        val chunkEndPairs = setOf('[' to ']', '(' to ')', '{' to '}', '<' to '>')
+        val endPairs = mapOf('[' to ']', '(' to ')', '{' to '}', '<' to '>')
     }
 
-    fun pushOrReturnInvalidChar(c: Char): Char? {
-        if(c in chunkEndPairs.map { it.first }) {
-            openers += c
-        } else {
-            val expectedPairing = chunkEndPairs.first { it.first == openers.last() }
-            if(c == expectedPairing.second) {
-                openers.removeLast()
-            } else {
-                return c
-            }
+    private fun Char.isOpener(): Boolean = this in endPairs.map { it.key }
+    private fun Char.isCloserForTopOfStack(): Boolean = this == endPairs[openers.first()]
+
+    fun pushOrReturnInvalidChar(c: Char): Char? =
+        when {
+            c.isOpener() -> apply { openers.add(0, c) }.let { null }
+            c.isCloserForTopOfStack() -> apply { openers.removeFirst() }.let { null }
+            else -> c
         }
-        return null
-    }
 
-    fun popCompliments(): List<Char> =
-        openers.map { c -> chunkEndPairs.first { it.first == c }.second }.reversed()
+    fun popCompliments(): List<Char> = openers.mapNotNull { c -> endPairs[c] }
 
 }
 
-fun String.getFirstCorruptChar(): Char? {
-    val chunkStack = ChunkStack()
-    return this.firstOrNull { chunkStack.pushOrReturnInvalidChar(it) != null }
-}
+fun String.getFirstCorruptChar(): Char? =
+    ChunkStack().let { stack -> this.firstOrNull { c -> stack.pushOrReturnInvalidChar(c) != null } }
 
 fun Char.getSyntaxCheckPoints(): Int =
     when(this) {
@@ -65,11 +58,8 @@ fun Char.getAutoCompletePoints(): Int =
         else -> error("Unknown closer")
     }
 
-fun String.getMissingClosers(): List<Char> {
-    val chunkStack = ChunkStack()
-    this.forEach { chunkStack.pushOrReturnInvalidChar(it) }
-    return chunkStack.popCompliments()
-}
+fun String.getMissingClosers(): List<Char> =
+    ChunkStack().apply { this@getMissingClosers.forEach { this.pushOrReturnInvalidChar(it) } }.popCompliments()
 
 private fun part2(inputFile: String) {
     File(inputFile).readLines().asSequence()
