@@ -7,7 +7,7 @@ fun main() {
     part2("src/main/resources/day9.txt")
 }
 
-typealias HeightMap = List<List<Int>>
+private typealias HeightMap = List<List<Int>>
 
 data class Elevation(val x: Int, val y: Int, val height: Int)
 
