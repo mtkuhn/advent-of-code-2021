@@ -1,5 +1,7 @@
 # Day 11: Dumbo Octopus
 
+[[source]](../src/main/kotlin/Day11.kt)
+
 We see a grid of Octopuses ahead (denoted by their current energy level). 
 Each gains one per turn and flashes if it's energy is greater than 9.
 Each flash causes further buildups of one energy in all 8 neighbors, which can trigger more flashes. 

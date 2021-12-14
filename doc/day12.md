@@ -1,5 +1,7 @@
 # Day 12: Passage Pathing
 
+[[source]](../src/main/kotlin/Day12.kt)
+
 We need to navigate across a network of big and small caves.
 
 Given a list of how cave passages connect, find all paths from `start` to `end`,
