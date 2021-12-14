@@ -15,10 +15,11 @@ private fun List<Map<String, Long>>.sumMappedCounts(): Map<String, Long> =
 
 /**
  * Sum only the first char of each key, as the second was duplicated when we split windowed pairs.
- * Except the last char of the template was not duplicated, add 1 for it.
+ * Except the last char of the template was not duplicated, so add 1 for it.
  */
 private fun Map<String, Long>.pairsToSingles(template: String): Map<String, Long> =
-    this.toMutableMap().apply{ this[template.last().toString()] = 1 }
+    this.toMutableMap()
+        .apply{ this[template.last().toString()] = 1 }
         .map { entry -> mapOf(entry.key[0].toString() to entry.value) }
         .sumMappedCounts()
 
@@ -27,7 +28,7 @@ private fun solve(inputFile: String, steps: Int) {
 
     val pairInsertionRegex = """(?<pair>..) -> (?<insert>.)""".toRegex()
 
-    //parse out the rule, then change it to a mapping of a pair to a list of the two resulting pairs
+    //parse out the rules, then change them to a mapping of chars to a list of pairs the rule would create
     val pairSplitterMap = File(inputFile).readLines()
         .drop(2)
         .mapNotNull { line -> pairInsertionRegex.matchEntire(line)?.groups }
