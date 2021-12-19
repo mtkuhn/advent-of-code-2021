@@ -3,16 +3,16 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 fun main() {
-    solve("src/main/resources/day18sample.txt")
+    sumAll("src/main/resources/day18sample.txt")
     greatestSum("src/main/resources/day18sample.txt")
-    solve("src/main/resources/day18.txt")
-    greatestSum("src/main/resources/day18.txt") //4453 not right
+    sumAll("src/main/resources/day18.txt")
+    greatestSum("src/main/resources/day18.txt")
 }
 
-fun solve(file: String) {
+fun sumAll(file: String) {
     File(file).readLines()
-        .map { it.toSnailfishNumber(null)}
-        .reduce { acc, next -> acc.snailFishAdd(next) }
+        .map { SnailfishNumber.ofString(it) }
+        .reduce { acc, next -> acc + next }
         .magnitude()
         .apply { println(this) }
 }
@@ -21,42 +21,58 @@ fun greatestSum(file: String) {
     val nums = File(file).readLines()
     nums.map { n1 ->
         nums.filter { it != n1 }.map { n2 ->
-            n1.toSnailfishNumber(null).snailFishAdd(n2.toSnailfishNumber(null)).magnitude()
+            (SnailfishNumber.ofString(n1) + SnailfishNumber.ofString(n2)).magnitude()
         }
     }.flatten().maxOrNull().apply { println(this) }
 }
 
-abstract class SnailfishNumber(var parent: SnailfishPair?) {
-    fun snailFishAdd(b: SnailfishNumber): SnailfishNumber {
-        val sn = SnailfishPair(this, b)
-        var exploders = 1
-        var splitters = 1
-        while(exploders > 0 || splitters > 0) {
-            exploders = 0
-            splitters = 0
+abstract class SnailfishNumber(var parent: SnailfishPair? = null) {
 
-            sn.getPairsAtDepth(4).firstOrNull()
-                ?.let {
-                    it.explode()
-                    exploders = 1
+    companion object {
+        fun ofString(str: String, parent: SnailfishPair? = null): SnailfishNumber =
+            if(str.matches("\\d+".toRegex())) {
+                SnailfishLiteral(str.toInt(), parent)
+            } else {
+                str.parsePair().let { pair ->
+                    SnailfishPair(ofString(pair.first), ofString(pair.second))
                 }
-
-            if(exploders == 0) {
-                sn.getAllLiterals().filter { it.value >= 10 }.firstOrNull()
-                    ?.apply { splitters = 1 }
-                    ?.split()
             }
-        }
+    }
 
+    operator fun plus(b: SnailfishNumber): SnailfishNumber {
+        val sn = SnailfishPair(this, b)
+        var wasRuleApplied = true
+        while(wasRuleApplied) {
+            wasRuleApplied = explodeIfNeeded(sn) || splitIfNeeded(sn)
+        }
         return sn
     }
 
-    fun getRootPair(): SnailfishPair {
-        var root = this
-        while(root.parent != null) {
-            root = root.parent as SnailfishPair
-        }
-        return root as SnailfishPair
+    private fun explodeIfNeeded(sn: SnailfishPair): Boolean =
+        sn.getPairsAtDepth(4).firstOrNull()?.explode()?:false
+
+    private fun splitIfNeeded(sn: SnailfishPair): Boolean =
+        sn.getAllLiterals().firstOrNull { it.value >= 10 }?.split()?:false
+
+    fun getRootPair(): SnailfishPair =
+        generateSequence(this) { it.parent }
+            .takeWhile { it != null }
+            .last() as SnailfishPair
+
+    abstract fun magnitude(): Long
+}
+
+class SnailfishLiteral(var value: Int, parent: SnailfishPair? = null): SnailfishNumber(parent) {
+    override fun toString() = value.toString()
+
+    fun split(): Boolean {
+         val new = SnailfishPair(
+            SnailfishLiteral(floor(value/2.0).toInt()),
+            SnailfishLiteral(ceil(value/2.0).toInt()),
+            this.parent
+        )
+        this.parent?.replace(this, new)
+        return true
     }
 
     fun firstLeftLiteral(): SnailfishLiteral? =
@@ -69,33 +85,22 @@ abstract class SnailfishNumber(var parent: SnailfishPair?) {
             literals.elementAtOrNull(literals.indexOf(this)+1)
         }
 
-    abstract fun magnitude(): Long
-}
-
-class SnailfishLiteral(var value: Int, parent: SnailfishPair? = null): SnailfishNumber(parent) {
-    override fun toString() = value.toString()
-
-    fun split() {
-         val new = SnailfishPair(
-            SnailfishLiteral(floor(value/2.0).toInt()),
-            SnailfishLiteral(ceil(value/2.0).toInt()),
-            this.parent
-        )
-        this.parent?.replace(this, new)
-    }
-
     override fun magnitude() = value.toLong()
 }
 
-class SnailfishPair(var left: SnailfishNumber, var right: SnailfishNumber, parent: SnailfishPair? = null): SnailfishNumber(parent) {
+class SnailfishPair(private var left: SnailfishNumber,
+                    private var right: SnailfishNumber,
+                    parent: SnailfishPair? = null): SnailfishNumber(parent) {
     init {
         left.parent = this
         right.parent = this
     }
 
     override fun toString() = "{$left,$right}"
-    fun both() = listOf(left, right)
-    fun getPairsAtNextDepth(): List<SnailfishPair> = this.both().filterIsInstance<SnailfishPair>()
+
+    private fun both() = listOf(left, right)
+
+    private fun getPairsAtNextDepth(): List<SnailfishPair> = this.both().filterIsInstance<SnailfishPair>()
 
     fun getPairsAtDepth(targetDepth: Int): List<SnailfishPair> {
         var pairs = listOf(this)
@@ -106,14 +111,21 @@ class SnailfishPair(var left: SnailfishNumber, var right: SnailfishNumber, paren
     }
 
     fun getAllLiterals(): List<SnailfishLiteral> =
-        this.both().map { if(it is SnailfishPair) it.getAllLiterals() else listOf(it) }.flatten() as List<SnailfishLiteral>
+        this.both().map {
+            when (it) {
+                is SnailfishPair -> it.getAllLiterals()
+                is SnailfishLiteral -> listOf(it)
+                else -> error("unknown type")
+            }
+        }.flatten()
 
-    fun explode() {
-        val leftLiteral = this.left.firstLeftLiteral()
-        val rightLiteral = this.right.firstRightLiteral()
-        if(leftLiteral != null) leftLiteral.value += (this.left as SnailfishLiteral).value
-        if(rightLiteral != null) rightLiteral.value += (this.right as SnailfishLiteral).value
+    fun explode(): Boolean {
+        val leftLiteral = if(left is SnailfishLiteral) (left as SnailfishLiteral).firstLeftLiteral() else null
+        val rightLiteral = if(right is SnailfishLiteral) (right as SnailfishLiteral).firstRightLiteral() else null
+        if(leftLiteral != null) leftLiteral.value += (left as SnailfishLiteral).value
+        if(rightLiteral != null) rightLiteral.value += (right as SnailfishLiteral).value
         this.parent?.replace(this, SnailfishLiteral(0, this.parent))
+        return true
     }
 
     fun replace(oldElement: SnailfishNumber, newElement:SnailfishNumber) {
@@ -124,15 +136,6 @@ class SnailfishPair(var left: SnailfishNumber, var right: SnailfishNumber, paren
     override fun magnitude(): Long = (3*this.left.magnitude()) + (2*this.right.magnitude())
 
 }
-
-fun String.toSnailfishNumber(parent: SnailfishPair?): SnailfishNumber =
-    if(this.matches("\\d+".toRegex())) {
-        SnailfishLiteral(this.toInt(), parent)
-    } else {
-        this.parsePair().let { pair ->
-            SnailfishPair(pair.first.toSnailfishNumber(null), pair.second.toSnailfishNumber(null))
-        }
-    }
 
 fun String.parsePair(): Pair<String, String> {
     var bracketCount = 0
