@@ -14,7 +14,6 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    testImplementation("io.mockk:mockk:{version}")
 }
 
 tasks.test {
