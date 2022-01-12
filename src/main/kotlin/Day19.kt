@@ -1,33 +1,26 @@
 import java.io.File
 import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.sin
 
 fun main() {
-    //part1("src/main/resources/day19sample.txt")
+    part1("src/main/resources/day19sample.txt")
     part1("src/main/resources/day19.txt")
-}
-
-enum class Axis(val getter: (Position3D) -> Int) {
-    X({ it.x }),
-    Y({ it.y }),
-    Z({ it.z })
 }
 
 data class Position3D(val x: Int, val y: Int, val z: Int) {
     operator fun plus(p: Position3D) = Position3D(this.x + p.x, this.y + p.y, this.z + p.z)
     operator fun minus(p: Position3D) = Position3D(this.x - p.x, this.y - p.y, this.z - p.z)
-    fun rotateBy(o: Orientation) = Position3D(
-        x*(quickCos(o.y)*quickCos(o.z))
-                + y*(quickSin(o.x)*quickSin(o.y)*quickCos(o.z) - quickCos(o.x)*quickSin(o.z))
-                + z*(quickCos(o.x)*quickSin(o.y)*quickCos(o.z) + quickSin(o.x)*quickSin(o.z)),
-        x*(quickCos(o.y)*quickSin(o.z))
-                + y*(quickSin(o.x)*quickSin(o.y)*quickSin(o.z) + quickCos(o.x)*quickCos(o.z))
-                + z*(quickCos(o.x)*quickSin(o.y)*quickSin(o.z) - quickSin(o.x)*quickCos(o.z)),
-        x*(0-quickSin(o.y))
-                + y*(quickSin(o.x)*quickCos(o.y))
-                + z*(quickCos(o.x)*quickCos(o.y))
-    )
+    fun rotateBy(o: Orientation) = //todo: find a library
+        Position3D(
+            x*(quickCos(o.y)*quickCos(o.z))
+                    + y*(quickSin(o.x)*quickSin(o.y)*quickCos(o.z) - quickCos(o.x)*quickSin(o.z))
+                    + z*(quickCos(o.x)*quickSin(o.y)*quickCos(o.z) + quickSin(o.x)*quickSin(o.z)),
+            x*(quickCos(o.y)*quickSin(o.z))
+                    + y*(quickSin(o.x)*quickSin(o.y)*quickSin(o.z) + quickCos(o.x)*quickCos(o.z))
+                    + z*(quickCos(o.x)*quickSin(o.y)*quickSin(o.z) - quickSin(o.x)*quickCos(o.z)),
+            x*(0-quickSin(o.y))
+                    + y*(quickSin(o.x)*quickCos(o.y))
+                    + z*(quickCos(o.x)*quickCos(o.y))
+        )
 
     private fun quickSin(degrees: Int) =
         when(degrees%360) {
@@ -39,6 +32,10 @@ data class Position3D(val x: Int, val y: Int, val z: Int) {
         }
 
     private fun quickCos(degrees: Int) = quickSin(degrees+90)
+
+    fun manhattanDistanceTo(dest: Position3D): Int =
+        abs(abs(this.x - dest.x) + abs(this.y - dest.y) + abs(this.z - dest.z))
+
 
     companion object {
         fun of(s: String) = s.split(",").map { it.trim().toInt() }.let { Position3D(it[0], it[1], it[2]) }
@@ -88,14 +85,16 @@ private fun part1(fileName: String) {
 
     val originScanner = scanners.first()
     var bigPicture = originScanner
+    val foundScanners = mutableListOf(originScanner)
     scanners.remove(originScanner)
 
     while(scanners.isNotEmpty()) {
         scanners.toList().forEach { rawScanner ->
-            listOf(bigPicture).forEach() { oScanner ->
+            listOf(bigPicture).forEach { oScanner ->
                 val alignedScanner = oScanner.align(rawScanner)
                 if(alignedScanner != null) {
                     scanners.remove(rawScanner)
+                    foundScanners.add(alignedScanner)
                     bigPicture = Scanner("big", Position3D.origin(), Orientation.standard(), bigPicture.beacons + alignedScanner.beacons)
                 }
             }
@@ -103,6 +102,12 @@ private fun part1(fileName: String) {
     }
 
     bigPicture.apply { println(this.beacons.size) }
+
+    foundScanners.flatMap { s1 ->
+        foundScanners.map { s2 ->
+            s1.pos.manhattanDistanceTo(s2.pos)
+        }
+    }.maxOrNull().apply { println(this) }
 }
 
 fun List<String>.parseScannerData(): List<Scanner> {
@@ -112,7 +117,7 @@ fun List<String>.parseScannerData(): List<Scanner> {
     this.drop(1).filter { it.isNotBlank() }.forEach { line ->
         if(line.contains("scanner")) {
             scannerSets += Scanner(workingName, Position3D.origin(), Orientation.standard(), workingSet)
-            workingSet = mutableSetOf<Position3D>()
+            workingSet = mutableSetOf()
             workingName = line.split(" ")[2]
         } else {
             workingSet += Position3D.of(line)
