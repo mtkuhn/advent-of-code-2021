@@ -1,8 +1,8 @@
 import java.io.File
 
 fun main() {
-    part1("src/main/resources/day20sample.txt")
-    part1("src/main/resources/day20.txt") //5243, 5368 too low, 6111 too high
+    solve("src/main/resources/day20sample.txt") //3351
+    solve("src/main/resources/day20.txt")
 }
 
 private data class Pixel(val x: Int, val y: Int) {
@@ -27,21 +27,23 @@ private data class Image(val lightPixels: Set<Pixel>, val infiniteChar: Char = '
 
     fun enhance(algorithm: String): Image {
         val newLightPixels = mutableSetOf<Pixel>()
-        lightPixels.forEach { lightPixel ->
-            lightPixel.adjacentPoints()
-                .filter { !newLightPixels.contains(it) }
-                .forEach { pixelToEval ->
-                    pixelToEval.adjacentPoints()
-                        .map { gridPixel ->
-                            when {
-                                !isInBounds(gridPixel) -> infiniteChar
-                                lightPixels.contains(gridPixel) -> '#'
-                                else -> '.'
-                            }
-                        }.map { if(it=='#') 1 else 0 }.joinToString("").toInt(2)
-                        .apply { if(algorithm[this] == '#') newLightPixels.add(pixelToEval) }
-                }
+
+        (bounds.second.first-1..bounds.second.last+1).forEach { y ->
+            (bounds.first.first-1..bounds.first.last+1).forEach { x ->
+                val pixelToEval = Pixel(x, y)
+                pixelToEval.adjacentPoints()
+                    .map { gridPixel ->
+                        when {
+                            !isInBounds(gridPixel) -> infiniteChar
+                            lightPixels.contains(gridPixel) -> '#'
+                            else -> '.'
+                        }
+                    }.map { if (it == '#') 1 else 0 }
+                    .joinToString("").toInt(2)
+                    .apply { if (algorithm[this] == '#') newLightPixels.add(pixelToEval) }
+            }
         }
+
         val newImageInfiniteValue = when {
             infiniteChar == '.' && algorithm.first()=='#' -> '#'
             infiniteChar == '#' && algorithm.last()=='.' -> '.'
@@ -53,7 +55,7 @@ private data class Image(val lightPixels: Set<Pixel>, val infiniteChar: Char = '
     private fun isInBounds(pixel: Pixel) = bounds.first.contains(pixel.x) && bounds.second.contains(pixel.y)
 }
 
-private fun part1(fileName: String) {
+private fun solve(fileName: String) {
     val imageEnhanceAlgorithm = File(fileName).readLines()
         .takeWhile { it.isNotBlank() }.joinToString("")
     val lightPixels = File(fileName).readLines()
@@ -64,5 +66,6 @@ private fun part1(fileName: String) {
             }
         }.toSet().let { Image(it) }
     lightPixels.enhance(imageEnhanceAlgorithm).enhance(imageEnhanceAlgorithm).apply { println(this.lightPixels.size) }
+    generateSequence(lightPixels) { acc -> acc.enhance(imageEnhanceAlgorithm) }.take(51).last().apply { println(this.lightPixels.size) }
 }
 
